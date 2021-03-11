@@ -14,24 +14,27 @@ namespace ECE141
     class NewPiece
     {
     public:
-        NewPiece(PieceColor aColor, Tile *aTile, PieceKind aKind = PieceKind::pawn) : tile(aTile), kind(aKind), color(aColor)
+        NewPiece(PieceColor aColor, Location aLoc, PieceKind aKind = PieceKind::pawn) : loc(aLoc), kind(aKind), color(aColor)
         {
         }
 
         bool operator==(NewPiece aNewPiece) const;
 
-        Location getLocation() const
-        {
-            return tile ? tile->getLocation() : Location(-1, -1);
+        Location getLocation() const {
+            return loc;
         }
 
-        Tile *getTile() { return (Tile *)tile; }
+        void changeLocation(int row, int col) {
+            loc.row = row;
+            loc.col = col;
+        }
+
         bool hasColor(PieceColor aColor) const { return color == aColor; }
         PieceKind getKind() { return kind; }
         const PieceColor getColor() { return color; }
 
-    private:
-        Tile *tile;
+
+        Location loc;
         PieceKind kind;
         PieceColor color;
     };
@@ -41,9 +44,42 @@ namespace ECE141
     public:
         GameState() {}
 
+        ~GameState() {
+            //deleting board
+            for(auto row: this->board)
+                for (auto col: row)
+                    delete col;
+
+            this->board.clear();
+            //deleting bluePieces
+            for(auto piece: this->bluePieces)
+                delete piece;
+
+            this->bluePieces.clear();
+            //deleting goldPieces
+            for(auto piece: this->goldPieces)
+                delete piece;
+
+            this->goldPieces.clear();
+            //deleting possibleMoves
+            for(auto piece: this->possibleMoves)
+                delete piece;
+
+            this->possibleMoves.clear();
+            //deleting original
+            delete original;
+            //deleting pieceMove
+            delete pieceMove;
+        }
+
         GameState(const GameState &aCopy);
 
-        int score() { return this->bluePieces.size() - this->goldPieces.size(); }
+        int score() {
+            if(this->stateColor == PieceColor::blue)
+                return this->bluePieces.size() - this->goldPieces.size();
+            else
+                return this->goldPieces.size() - this->bluePieces.size();
+        }
 
         bool gameOver();
 
@@ -55,10 +91,6 @@ namespace ECE141
             }
             return false;
         }
-
-//        bool validateMove(Location *aMove, PieceColor color);
-//        //valid Location
-//        // valid move
 
         void getMoves(PieceColor color);
 
@@ -73,7 +105,6 @@ namespace ECE141
             return true;
         }
 
-        bool validMove(NewPiece *aPiece, Location *location);
         bool check_if_can_add_move(NewPiece *aPiece, Location *location);
 
         std::vector<std::vector<NewPiece *>> board;

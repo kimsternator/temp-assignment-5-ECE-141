@@ -3,7 +3,7 @@
 //
 
 #include "GameState.hpp"
-#include <algorithm>
+
 namespace ECE141 {
     bool NewPiece::operator==(ECE141::NewPiece aNewPiece) const {
         if(this->hasColor(aNewPiece.getColor()))
@@ -25,7 +25,7 @@ namespace ECE141 {
             for (int j = 0; j < aCopy.board[0].size(); j++)
                 if (aCopy.board[i][j] != nullptr)
                     row.push_back(new NewPiece(aCopy.board[i][j]->getColor(),
-                                               aCopy.board[i][j]->getTile(),
+                                               aCopy.board[i][j]->getLocation(),
                                                aCopy.board[i][j]->getKind()));
                 else
                     row.push_back(nullptr);
@@ -34,26 +34,23 @@ namespace ECE141 {
         }
 
         for (auto piece: aCopy.bluePieces)
-            bluePieces.push_back(new NewPiece(piece->getColor(), piece->getTile(), piece->getKind()));
+            bluePieces.push_back(new NewPiece(piece->getColor(), piece->getLocation(), piece->getKind()));
 
         for (auto piece: aCopy.goldPieces)
-            goldPieces.push_back(new NewPiece(piece->getColor(), piece->getTile(), piece->getKind()));
+            goldPieces.push_back(new NewPiece(piece->getColor(), piece->getLocation(), piece->getKind()));
+
+        stateColor = aCopy.stateColor;
     }
 
-    void GameState::getMoves(PieceColor color) { // need to implement jump move check
-        std::vector<GameState *> children;
-        // check this for jump flag
-        //if flag not true
+    void GameState::getMoves(PieceColor color) {
         if (color == PieceColor::blue) {
             for (auto piece: this->bluePieces)
                 getPieceMoves(piece);
-        } else {
+        }
+        else {
             for (auto piece: this->goldPieces)
                 getPieceMoves(piece);
         }
-        // else flag is false
-        //      piece = this-> getCurPiece()
-        //
     }
 
 
@@ -72,22 +69,23 @@ namespace ECE141 {
         for (auto loc : locations) {
             if (check_if_can_add_move(aPiece,loc)) { // enter if it is a valid move
                 GameState* aGameState = new GameState(*this);
-                aGameState->original = aPiece;
+                aGameState->original = new NewPiece(aPiece->getColor(), aPiece->loc, aPiece->getKind());
                 aGameState->pieceMove = loc;
                 // remove piece from old position
                 auto oldLocation = aPiece->getLocation();
                 aGameState->board[oldLocation.row][oldLocation.col] = nullptr;
                 // move piece to new position
                 aGameState->board[loc->row][loc->col] = aPiece;
+                aPiece->changeLocation(loc->row, loc->col);
                 // if there was  a jump remove conquered piece
                 if (std::abs(oldLocation.row-loc->row) ==2) {
                     // change piece location
                     int delrow = oldLocation.row + (loc->row - oldLocation.row) / 2;
                     int delcol = oldLocation.col + (loc->col- oldLocation.col) / 2;
                     // remove piece from the teams pieces
-                    auto pieceToDelete = this->board[delrow][delcol];
+                    auto pieceToDelete = aGameState->board[delrow][delcol];
                     if (pieceToDelete->getColor() == PieceColor::blue) {
-                        auto foundPiece = std::find(aGameState->bluePieces.begin(),aGameState->bluePieces.end(),pieceToDelete );
+                        auto foundPiece = std::find(aGameState->bluePieces.begin(),aGameState->bluePieces.end(),pieceToDelete);
                         if(foundPiece != aGameState->bluePieces.end()) {
                             delete *foundPiece;
                             aGameState->bluePieces.erase(foundPiece);
@@ -100,6 +98,8 @@ namespace ECE141 {
                             aGameState->goldPieces.erase(foundPiece);
                         }
                     }
+
+                    delete pieceToDelete;
                     delete this->board[delrow][delcol];
                 }
 
@@ -113,15 +113,19 @@ namespace ECE141 {
 //    }
 
     bool GameState::check_if_can_add_move(NewPiece* aPiece, Location* location) {
-        if(!this->jumpFlag) {
-            if (!validLocation(location)) return false;
+        if (validLocation(location)) {
             if (!isValidDirection(aPiece, aPiece->getLocation(), location)) return false;
-            if (this->board[location->row][location->col] == nullptr) return true; //assuming board is nullptr in i,j th spot if no piece
+            if(!this->jumpFlag)
+                if (this->board[location->row][location->col] == nullptr)
+                    return true; //assuming board is nullptr in i,j th spot if no piece
         }
+        else
+            return false;
 
+        if (this->board[location->row][location->col] == nullptr) return false;
         if (this->board[location->row][location->col]->getColor() == aPiece->getColor()) return false;
-        location->row +=  aPiece->getLocation().row -  location->row;
-        location->col +=  aPiece->getLocation().col -  location->col;
+        location->row +=  location->row - aPiece->getLocation().row;
+        location->col +=  location->col - aPiece->getLocation().col;
         if (!validLocation(location)) return false;
         if (this->board[location->row][location->col] == nullptr) {
             if (!this->jumpFlag) {
@@ -136,3 +140,7 @@ namespace ECE141 {
         return false;
     }
 }
+
+//*************************
+//still an error with jumps
+//*************************
