@@ -3,7 +3,7 @@
 //
 
 #include "GameState.hpp"
-
+#include <algorithm>
 namespace ECE141 {
     bool GameState::gameOver() {
         return this->bluePieces.size() == 0 || this->goldPieces.size() == 0;
@@ -33,7 +33,8 @@ namespace ECE141 {
 
     std::vector<GameState *> GameState::getMoves(PieceColor color) { // need to implement jump move check
         std::vector<GameState *> children;
-
+        // check this for jump flag
+        //if flag not true
         if (color == PieceColor::blue) {
             for (auto piece: this->bluePieces)
                 for (auto move: getPieceMoves(piece))
@@ -43,144 +44,78 @@ namespace ECE141 {
                 for (auto move: getPieceMoves(piece))
                     children.push_back(move);
         }
+        // else flag is false
+        //      piece = this-> getCurPiece()
+        //      
 
         return children;
     }
+
+
 
     std::vector<GameState *> GameState::getPieceMoves(NewPiece *aPiece) {
         std::vector<GameState *> moves;
 //        std::vector<std::pair<Location *, bool>> locationMoves; // <Location, jump flag>
         std::vector<Location *> locationMoves;
+
+
+        // have all avail locations
         Location *upLeft = new Location(aPiece->getLocation().row - 1, aPiece->getLocation().col - 1);
         Location *upRight = new Location(aPiece->getLocation().row - 1, aPiece->getLocation().col + 1);
         Location *downLeft = new Location(aPiece->getLocation().row + 1, aPiece->getLocation().col - 1);
         Location *downRight = new Location(aPiece->getLocation().row + 1, aPiece->getLocation().col + 1);
+        std::vector<Location*> locations = {upLeft,upRight,downLeft,downRight};
 
-        if(validMove(aPiece, upLeft))
-            moves.emplace_back(createMove(aPiece, upLeft));
-        else
-            delete upLeft
-
-
-
-//        if (validMove(aPiece, upLeft)) {
-//            GameState *move = createMove(aPiece, upLeft);
-//            moves.emplace_back(move);
-//        }
-//        else {
-//            upLeft->row -= 1;
-//            upLeft->col -= 1;
-//
-//            if (validMove(aPiece, upLeft)) {
-//                GameState *move = createMove(aPiece, upLeft);
-//                moves.emplace_back(move);
-//            }
-//            else
-//                delete upLeft;
-//        }
-//            delete upLeft;
-
-
-
-        if (validateMove(upLeft, aPiece->getColor()))
-            locationMoves.emplace_back(std::make_pair(upLeft, false));
-        else {
-            if (this->board[upLeft->row][upLeft->col]->getColor() != aPiece->getColor()) {
-                upLeft->row -= 1;
-                upLeft->col -= 1;
-
-                if (validateMove(upLeft, aPiece->getColor()))
-                    locationMoves.emplace_back(std::make_pair(upLeft, true));
-                else
-                    delete upLeft;
-            } else
-                delete upLeft;
-        }
-
-        if (validateMove(upLeft, aPiece->getColor()) && !this->jumpFlag)
-            locationMoves.emplace_back(upLeft);
-        else if()
-
-
-
-
-
-
-
-
-        if (validateMove(upRight, aPiece->getColor()))
-            locationMoves.emplace_back(std::make_pair(upRight, false));
-        else {
-            if (this->board[upRight->row][upRight->col]->getColor() != aPiece->getColor()) {
-                upRight->row -= 1;
-                upRight->col += 1;
-
-                if (validateMove(upRight, aPiece->getColor()))
-                    locationMoves.emplace_back(std::make_pair(upRight, true));
-                else
-                    delete upRight;
-            } else
-                delete upRight;
-        }
-
-        if (validateMove(downLeft, aPiece->getColor()))
-            locationMoves.emplace_back(std::make_pair(downLeft, false));
-        else {
-            if (this->board[downLeft->row][downLeft->col]->getColor() != aPiece->getColor()) {
-                downLeft->row += 1;
-                downLeft->col -= 1;
-
-                if (validateMove(downLeft, aPiece->getColor()))
-                    locationMoves.emplace_back(std::make_pair(downLeft, true));
-                else
-                    delete downLeft;
-            } else
-                delete downLeft;
-        }
-
-        if (validateMove(downRight, aPiece->getColor()))
-            locationMoves.emplace_back(std::make_pair(downRight, false));
-        else {
-            if (this->board[downRight->row][downRight->col]->getColor() != aPiece->getColor()) {
-                downRight->row += 1;
-                downRight->col += 1;
-
-                if (validateMove(downRight, aPiece->getColor()))
-                    locationMoves.emplace_back(std::make_pair(downRight, true));
-                else
-                    delete downRight;
-            } else
-                delete downRight;
-        }
-
-        //remove all moves that aren't a jump if a jump move is present
-        bool jumpFlag = false;
-        for (int i = locationMoves.size() - 1; i >= 0; i--) {
-            if (!jumpFlag) {
-                if (locationMoves[i].second) {
-                    jumpFlag = true;
-
-                    for (int j = locationMoves.size() - 1; j > i; j--) {
-                        delete locationMoves[j].first;
-
-                        locationMoves.erase(locationMoves.begin() + j);
+        for (auto loc : locations) {
+            if (check_if_can_add_move(aPiece,loc)) {
+                GameState* aGameState = new GameState(*this);
+                // remove piece from old position
+                auto oldLocation = aPiece->getLocation();
+                aGameState->board[oldLocation.row][oldLocation.col] = nullptr;
+                // move piece to new position
+                aGameState->board[loc->row][loc->col] = aPiece;
+                // if there was  a jump remove conquered piece
+                if (std::abs(oldLocation.row-loc->row) ==2) {
+                    // change piece location
+                    int delrow = oldLocation.row + (loc->row - oldLocation.row) / 2;
+                    int delcol = oldLocation.col + (loc->col- oldLocation.col) / 2;
+                    // remove piece from the teams pieces
+                    auto pieceToDelete = this->board[delrow][delcol];
+                    if (pieceToDelete->getColor() == PieceColor::blue) {
+                        auto foundPiece = std::find(aGameState->bluePieces.begin(),aGameState->bluePieces.end(),pieceToDelete );
+                        if(foundPiece != aGameState->bluePieces.end()) {
+                            delete *foundPiece;
+                            aGameState->bluePieces.erase(foundPiece);
+                        }
                     }
-                }
-            } else {
-                if (!locationMoves[i].second) {
-                    delete locationMoves[i].first;
-
-                    locationMoves.erase(locationMoves.begin() + i);
+                    else {
+                        auto foundPiece = std::find(aGameState->goldPieces.begin(),aGameState->goldPieces.end(),pieceToDelete );
+                        if(foundPiece != aGameState->goldPieces.end()) {
+                            delete *foundPiece;
+                            aGameState->goldPieces.erase(foundPiece);
+                        }
+                    }
+                    delete this->board[delrow][delcol];
                 }
             }
-        }
 
-        for (int i = 0; i < locationMoves.size(); i++) {
-            GameState *state(this);
-            state->movePiece(aPiece, locationMoves[i].first);
-            moves.emplace_back(state);
         }
 
         return moves;
+    }
+
+    bool GameState::validMove(NewPiece* aPiece, Location* location) {
+        return (validLocation(location) && validateMove(location,aPiece->getColor()));
+    }
+    bool GameState::check_if_can_add_move(NewPiece* aPiece, Location* location) {
+        if (!validLocation(location)) return false;
+        if(!isValidDirection(aPiece,aPiece->getLocation(),location)) return false;
+        if (this->board[location->row][location->col] == nullptr) return true; //assuming board is nullptr in i,j th spot if no piece
+        if (this->board[location->row][location->col]->getColor() == aPiece->getColor()) return false;
+        location->row +=  aPiece->getLocation().row -  location->row;
+        location->col +=  aPiece->getLocation().col -  location->col;
+        if (!validLocation(location)) return false;
+        if (this->board[location->row][location->col] == nullptr) return true; //assuming board is nullptr in i,j th spot if no piece
+        return false;
     }
 }

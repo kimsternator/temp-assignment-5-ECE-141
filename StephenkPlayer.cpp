@@ -54,10 +54,14 @@ namespace ECE141 {
             }
         }
 
+
         state->board = board;
         std::cout << "\nhere";
-
         std::cout << "\n" << state->score() << std::endl;
+        /*
+         *       Game state is now initalized with state of real game
+        */
+
 
         /* TOP LEVEL
          * BLUE PLAYER
@@ -70,16 +74,6 @@ namespace ECE141 {
          *   if minimax(move) > maxScoringMove;
          *
          */
-
-
-
-
-
-
-
-
-
-
 
 
 
