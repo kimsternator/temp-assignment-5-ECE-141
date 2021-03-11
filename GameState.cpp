@@ -144,3 +144,5 @@ namespace ECE141 {
 //*************************
 //still an error with jumps
 //*************************
+//turn 11 for blue
+//turn 8 for blue
