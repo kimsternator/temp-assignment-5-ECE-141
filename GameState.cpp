@@ -5,8 +5,17 @@
 #include "GameState.hpp"
 #include <algorithm>
 namespace ECE141 {
+    bool NewPiece::operator==(ECE141::NewPiece aNewPiece) const {
+        if(this->hasColor(aNewPiece.getColor()))
+            if(this->getLocation().row == aNewPiece.getLocation().row)
+                if(this->getLocation().col == aNewPiece.getLocation().col)
+                    return true;
+
+        return false;
+    }
+
     bool GameState::gameOver() {
-        return this->bluePieces.size() == 0 || this->goldPieces.size() == 0;
+        return this->bluePieces.empty() || this->goldPieces.empty();
     }
 
     GameState::GameState(const ECE141::GameState &aCopy) {
@@ -31,31 +40,25 @@ namespace ECE141 {
             goldPieces.push_back(new NewPiece(piece->getColor(), piece->getTile(), piece->getKind()));
     }
 
-    std::vector<GameState *> GameState::getMoves(PieceColor color) { // need to implement jump move check
+    void GameState::getMoves(PieceColor color) { // need to implement jump move check
         std::vector<GameState *> children;
         // check this for jump flag
         //if flag not true
         if (color == PieceColor::blue) {
             for (auto piece: this->bluePieces)
-                for (auto move: getPieceMoves(piece))
-                    children.push_back(move);
+                getPieceMoves(piece);
         } else {
             for (auto piece: this->goldPieces)
-                for (auto move: getPieceMoves(piece))
-                    children.push_back(move);
+                getPieceMoves(piece);
         }
         // else flag is false
         //      piece = this-> getCurPiece()
-        //      
-
-        return children;
+        //
     }
 
 
 
-    std::vector<GameState *> GameState::getPieceMoves(NewPiece *aPiece) {
-        std::vector<GameState *> moves;
-//        std::vector<std::pair<Location *, bool>> locationMoves; // <Location, jump flag>
+    void GameState::getPieceMoves(NewPiece *aPiece) {
         std::vector<Location *> locationMoves;
 
 
@@ -67,8 +70,10 @@ namespace ECE141 {
         std::vector<Location*> locations = {upLeft,upRight,downLeft,downRight};
 
         for (auto loc : locations) {
-            if (check_if_can_add_move(aPiece,loc)) {
+            if (check_if_can_add_move(aPiece,loc)) { // enter if it is a valid move
                 GameState* aGameState = new GameState(*this);
+                aGameState->original = aPiece;
+                aGameState->pieceMove = loc;
                 // remove piece from old position
                 auto oldLocation = aPiece->getLocation();
                 aGameState->board[oldLocation.row][oldLocation.col] = nullptr;
@@ -97,25 +102,37 @@ namespace ECE141 {
                     }
                     delete this->board[delrow][delcol];
                 }
-            }
 
+                this->possibleMoves.emplace_back(aGameState);
+            }
+        }
+    }
+
+//    bool GameState::validMove(NewPiece* aPiece, Location* location) {
+//        return (validLocation(location) && validateMove(location,aPiece->getColor()));
+//    }
+
+    bool GameState::check_if_can_add_move(NewPiece* aPiece, Location* location) {
+        if(!this->jumpFlag) {
+            if (!validLocation(location)) return false;
+            if (!isValidDirection(aPiece, aPiece->getLocation(), location)) return false;
+            if (this->board[location->row][location->col] == nullptr) return true; //assuming board is nullptr in i,j th spot if no piece
         }
 
-        return moves;
-    }
-
-    bool GameState::validMove(NewPiece* aPiece, Location* location) {
-        return (validLocation(location) && validateMove(location,aPiece->getColor()));
-    }
-    bool GameState::check_if_can_add_move(NewPiece* aPiece, Location* location) {
-        if (!validLocation(location)) return false;
-        if(!isValidDirection(aPiece,aPiece->getLocation(),location)) return false;
-        if (this->board[location->row][location->col] == nullptr) return true; //assuming board is nullptr in i,j th spot if no piece
         if (this->board[location->row][location->col]->getColor() == aPiece->getColor()) return false;
         location->row +=  aPiece->getLocation().row -  location->row;
         location->col +=  aPiece->getLocation().col -  location->col;
         if (!validLocation(location)) return false;
-        if (this->board[location->row][location->col] == nullptr) return true; //assuming board is nullptr in i,j th spot if no piece
+        if (this->board[location->row][location->col] == nullptr) {
+            if (!this->jumpFlag) {
+                for (auto move: this->possibleMoves)
+                    delete move;
+
+                this->possibleMoves.clear();
+                this->jumpFlag = true;
+            }
+            return true; //assuming board is nullptr in i,j th spot if no piece
+        }
         return false;
     }
 }

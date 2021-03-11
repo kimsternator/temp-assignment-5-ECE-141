@@ -11,6 +11,7 @@ namespace ECE141 {
     bool StephenkPlayer::takeTurn(Game &aGame, Orientation aDirection, std::ostream &aLog) {
         GameState *state = new GameState();
         std::vector<std::vector<NewPiece*>> board(Game::kBoardHeight, std::vector<NewPiece*>(Game::kBoardHeight, nullptr));
+
         size_t theCount=aGame.countAvailablePieces(this->color);
         for(int pos=0;pos<theCount;pos++) {
             if(const Piece *thePiece = aGame.getAvailablePiece(this->color, pos)) {
@@ -62,28 +63,76 @@ namespace ECE141 {
          *       Game state is now initalized with state of real game
         */
 
+        CheckersMinimax* mm = new CheckersMinimax(this->color);
 
-        /* TOP LEVEL
-         * BLUE PLAYER
-         * vector of all BLUE pieces that can move
-         * [P1L, P1R,
-         *
-         * auto maxScoringMove;
-         * vector of all blue moves gamestates
-         * for each blue move:
-         *   if minimax(move) > maxScoringMove;
-         *
-         */
+        if(this->count == 2)
+            std::cout << "here" << std::endl;
 
+        state = mm->minimax(state, 3, 0, 0, 1);
+        std::cout << "finished planning" << std::endl;
+        if(this->color == PieceColor::blue) {
+            for(int pos=0;pos<theCount;pos++) {
+                if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == state->original->getLocation().row) {
+                    if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == state->original->getLocation().col) {
+                        std::cout << "(" << aGame.getAvailablePiece(this->color, pos)->getLocation().row <<
+                        "," << aGame.getAvailablePiece(this->color, pos)->getLocation().col << ") -> (" <<
+                        state->pieceMove->row << "," << state->pieceMove->col << std::endl;
+                        this->count++;
+                        aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(state->pieceMove));
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            for(int pos=0;pos<theOtherCount;pos++) {
+                if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == state->original->getLocation().row) {
+                    if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == state->original->getLocation().col) {
+                        std::cout << "(" << aGame.getAvailablePiece(this->color, pos)->getLocation().row <<
+                                  "," << aGame.getAvailablePiece(this->color, pos)->getLocation().col << ") -> (" <<
+                                  state->pieceMove->row << "," << state->pieceMove->col << std::endl;
+                        this->count++;
+                        aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(state->pieceMove));
+                        break;
+                    }
+                }
+            }
+        }
+        std::cout << "made move" << std::endl;
 
+        while(state->jumpFlag) {
+            for(auto move: state->possibleMoves)
+                delete move;
 
-        /* auto maxPiece = P(1, 2)l
-         *  vector (piece moves, (ie P(1, 2) ~ [P(0, 3), P(0, 1),.....
-         *  aGame.movePieceTo(aGameindex(state->bluePieces(maxPiece)), Location(1,2));
-         */
-        /* size_t theCountOther = aGame.countAvailablePieces((pcount % 2) ? PieceColor::blue : PieceColor::gold);
-         *
-         */
+            state->possibleMoves.clear();
+            state = mm->minimax(state, 3, 0, 0, 1);
+            // just the logic to move the darn piece
+            if(this->color == PieceColor::blue) {
+                for(int pos=0;pos<theCount;pos++) {
+                    if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == state->original->getLocation().row) {
+                        if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == state->original->getLocation().col) {
+                            aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(state->pieceMove));
+                            break;
+                        }
+                    }
+                }
+            }
+            else {
+                for(int pos=0;pos<theOtherCount;pos++) {
+                    if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == state->original->getLocation().row) {
+                        if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == state->original->getLocation().col) {
+                            aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(state->pieceMove));
+                            break;
+                        }
+                    }
+                }
+            }
+            // end the dumb logic
+        }
+
+        delete state;
+
+        return true;
         return false; //if you return false, you forfeit!
     }
 }

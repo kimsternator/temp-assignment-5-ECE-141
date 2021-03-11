@@ -6,13 +6,20 @@
 #define ECE141A_CHECKERSMINIMAX_HPP
 
 #include "GameState.hpp"
+#include "StephenkPlayer.hpp"
 
 namespace ECE141 {
     class CheckersMinimax {
     public:
         CheckersMinimax()=default;
 
+        CheckersMinimax(PieceColor aColor) {
+            playerColor = aColor;
+        }
+
         GameState* minimax(GameState *state, int depth, int alpha, int beta, int maximizingPlayer);
+
+        PieceColor playerColor;
 };
 }
 

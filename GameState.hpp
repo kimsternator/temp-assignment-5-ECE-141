@@ -18,17 +18,17 @@ namespace ECE141
         {
         }
 
-        bool operator==(const NewPiece aNewPiece) const;
+        bool operator==(NewPiece aNewPiece) const;
 
-        Location getLocation()
+        Location getLocation() const
         {
             return tile ? tile->getLocation() : Location(-1, -1);
         }
 
         Tile *getTile() { return (Tile *)tile; }
-        bool hasColor(PieceColor aColor) { return color == aColor; }
+        bool hasColor(PieceColor aColor) const { return color == aColor; }
         PieceKind getKind() { return kind; }
-        PieceColor getColor() { return color; }
+        const PieceColor getColor() { return color; }
 
     private:
         Tile *tile;
@@ -56,31 +56,13 @@ namespace ECE141
             return false;
         }
 
-        bool validateMove(Location *aMove, PieceColor color);
-        //valid Location
-        // valid move
+//        bool validateMove(Location *aMove, PieceColor color);
+//        //valid Location
+//        // valid move
 
-        void movePiece(NewPiece *aPiece, Location *aMove);
-        // move the piece
-        //set piece to king if applicable
-        // update blue/gold pieces
-        //update original and pieceMove
+        void getMoves(PieceColor color);
 
-        std::vector<GameState *> getMoves(PieceColor color);
-
-        std::vector<GameState *> getPieceMoves(NewPiece *aPiece);
-
-        std::vector<std::vector<NewPiece *>> board;
-        std::vector<NewPiece *> bluePieces;
-        std::vector<NewPiece *> goldPieces;
-
-        bool validMove(NewPiece *aPiece, Location *location);
-        bool check_if_can_add_move(NewPiece *aPiece, Location *location);
-
-        bool jumpFlag = false;
-        NewPiece *original;
-        Location *pieceMove;
-        //        int turn; //0 - blue : 1 - gold
+        void getPieceMoves(NewPiece *aPiece);
 
         bool isValidDirection( NewPiece *aPiece,  Location aSrc,  Location *aDest)
         {
@@ -90,6 +72,19 @@ namespace ECE141
             }
             return true;
         }
+
+        bool validMove(NewPiece *aPiece, Location *location);
+        bool check_if_can_add_move(NewPiece *aPiece, Location *location);
+
+        std::vector<std::vector<NewPiece *>> board;
+        std::vector<NewPiece *> bluePieces;
+        std::vector<NewPiece *> goldPieces;
+        std::vector<GameState* > possibleMoves;
+
+        bool jumpFlag = false;
+        NewPiece *original;
+        Location *pieceMove;
+        PieceColor stateColor; //must implement in minimax we are using both players
     };
 
 }

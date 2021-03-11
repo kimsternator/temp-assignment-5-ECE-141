@@ -9,37 +9,44 @@ namespace ECE141 {
         if(depth == 0 || state->gameOver())
             return state;
 
+        if(this->playerColor == PieceColor::gold)
+            state->stateColor = (maximizingPlayer == 0) ? PieceColor::blue : PieceColor::gold;
+        else
+            state->stateColor = (maximizingPlayer == 0) ? PieceColor::gold : PieceColor::blue;
+
+        state->getMoves(state->stateColor);
+
         if(maximizingPlayer) {
             int maxEval = -100;
             GameState* maxState = nullptr;
 
-            for(auto child: state->getMoves((maximizingPlayer == 0) ? PieceColor::blue : PieceColor::gold)) {
+            for(auto child: state->possibleMoves) {
                 auto eval = minimax(child, depth - 1, alpha, beta, 0);
                 int temp = maxEval;
-                maxEval = max(maxEval, eval->score());
-                alpha = max(alpha, eval->score());
+                maxEval = std::max(maxEval, eval->score());
+                alpha = std::max(alpha, eval->score());
 
                 if(temp != maxEval) maxState = eval;
                 if(beta <= alpha) break;
-
-                return maxState;
             }
+
+            return maxState;
         }
         else {
             int minEval = 100;
             GameState* minState = nullptr;
 
-            for(auto child: state->getMoves(maximizingPlayer == 0) ? PieceColor::blue : PieceColor::gold) {
+            for(auto child: state->possibleMoves) {
                 auto eval = minimax(child, depth - 1, alpha, beta, 1);
                 int temp = minEval;
-                minEval = min(minEval, eval->score());
-                alpha = min(alpha, eval->score());
+                minEval = std::min(minEval, eval->score());
+                alpha = std::min(alpha, eval->score());
 
                 if(temp != minEval) minState = eval;
                 if(beta <= alpha) break;
-
-                return minState;
             }
+
+            return minState;
         }
     }
 }

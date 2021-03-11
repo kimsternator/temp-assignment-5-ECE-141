@@ -7,6 +7,7 @@
 
 #include "Player.hpp"
 #include "GameState.hpp"
+#include "CheckersMinimax.hpp"
 #include <vector>
 
 namespace ECE141 {
@@ -15,6 +16,8 @@ namespace ECE141 {
         StephenkPlayer() : Player() {}
 
         bool takeTurn(Game &aGame, Orientation aDirection, std::ostream &aLog);
+
+        int count = 0;
     };
 }
 
