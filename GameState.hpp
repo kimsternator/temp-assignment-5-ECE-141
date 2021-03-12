@@ -52,18 +52,12 @@ namespace ECE141
 
             this->board.clear();
             //deleting bluePieces
-            for(auto piece: this->bluePieces)
-                delete piece;
-
             this->bluePieces.clear();
             //deleting goldPieces
-            for(auto piece: this->goldPieces)
-                delete piece;
-
             this->goldPieces.clear();
             //deleting possibleMoves
-            for(auto piece: this->possibleMoves)
-                delete piece;
+            for(auto move: this->possibleMoves)
+                delete move;
 
             this->possibleMoves.clear();
             //deleting original

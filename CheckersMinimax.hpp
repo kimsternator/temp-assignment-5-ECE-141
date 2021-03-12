@@ -13,6 +13,8 @@ namespace ECE141 {
     public:
         CheckersMinimax()=default;
 
+        ~CheckersMinimax()=default;
+
         CheckersMinimax(PieceColor aColor) {
             playerColor = aColor;
         }

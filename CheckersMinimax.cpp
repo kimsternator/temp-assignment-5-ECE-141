@@ -26,7 +26,11 @@ namespace ECE141 {
                 maxEval = std::max(maxEval, eval->score());
                 alpha = std::max(alpha, eval->score());
 
-                if(temp != maxEval) maxState = eval;
+                if(temp != maxEval) {
+                    delete maxState;
+
+                    maxState = eval;
+                }
 //                if(beta <= alpha) break;
             }
 
@@ -42,7 +46,11 @@ namespace ECE141 {
                 minEval = std::min(minEval, eval->score());
                 alpha = std::min(alpha, eval->score());
 
-                if(temp != minEval) minState = eval;
+                if(temp != minEval) {
+                    delete minState;
+
+                    minState = eval;
+                }
 //                if(beta <= alpha) break;
             }
 

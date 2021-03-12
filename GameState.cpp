@@ -76,41 +76,39 @@ namespace ECE141 {
                 aGameState->board[oldLocation.row][oldLocation.col] = nullptr;
                 // move piece to new position
                 aGameState->board[loc->row][loc->col] = aPiece;
-                aPiece->changeLocation(loc->row, loc->col);
+//                aPiece->changeLocation(loc->row, loc->col);
                 // if there was  a jump remove conquered piece
-                if (std::abs(oldLocation.row-loc->row) ==2) {
+                if (std::abs(oldLocation.row-loc->row) == 2) {
                     // change piece location
                     int delrow = oldLocation.row + (loc->row - oldLocation.row) / 2;
                     int delcol = oldLocation.col + (loc->col- oldLocation.col) / 2;
                     // remove piece from the teams pieces
                     auto pieceToDelete = aGameState->board[delrow][delcol];
                     if (pieceToDelete->getColor() == PieceColor::blue) {
-                        auto foundPiece = std::find(aGameState->bluePieces.begin(),aGameState->bluePieces.end(),pieceToDelete);
+                        auto foundPiece = std::find(aGameState->bluePieces.begin(),aGameState->bluePieces.end(), pieceToDelete);
                         if(foundPiece != aGameState->bluePieces.end()) {
-                            delete *foundPiece;
                             aGameState->bluePieces.erase(foundPiece);
+//                            delete *foundPiece;
                         }
                     }
                     else {
                         auto foundPiece = std::find(aGameState->goldPieces.begin(),aGameState->goldPieces.end(),pieceToDelete );
                         if(foundPiece != aGameState->goldPieces.end()) {
-                            delete *foundPiece;
                             aGameState->goldPieces.erase(foundPiece);
+//                            delete *foundPiece;
                         }
                     }
 
                     delete pieceToDelete;
-                    delete this->board[delrow][delcol];
+//                    delete this->board[delrow][delcol];
                 }
 
                 this->possibleMoves.emplace_back(aGameState);
             }
+            else
+                delete loc;
         }
     }
-
-//    bool GameState::validMove(NewPiece* aPiece, Location* location) {
-//        return (validLocation(location) && validateMove(location,aPiece->getColor()));
-//    }
 
     bool GameState::check_if_can_add_move(NewPiece* aPiece, Location* location) {
         if (validLocation(location)) {
