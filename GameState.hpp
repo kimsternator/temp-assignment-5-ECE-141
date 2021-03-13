@@ -30,7 +30,7 @@ namespace ECE141
         }
 
         bool hasColor(PieceColor aColor) const { return color == aColor; }
-        PieceKind getKind() { return kind; }
+        PieceKind getKind() const { return kind; }
         const PieceColor getColor() { return color; }
 
 
@@ -86,7 +86,7 @@ namespace ECE141
             return false;
         }
 
-        void getMoves(PieceColor color);
+        void getMoves();
 
         void getPieceMoves(NewPiece *aPiece);
 

@@ -9,7 +9,8 @@ namespace ECE141 {
         if(this->hasColor(aNewPiece.getColor()))
             if(this->getLocation().row == aNewPiece.getLocation().row)
                 if(this->getLocation().col == aNewPiece.getLocation().col)
-                    return true;
+                    if(this->getKind() == aNewPiece.getKind())
+                        return true;
 
         return false;
     }
@@ -23,27 +24,29 @@ namespace ECE141 {
             std::vector<NewPiece *> row;
 
             for (int j = 0; j < aCopy.board[0].size(); j++)
-                if (aCopy.board[i][j] != nullptr)
-                    row.push_back(new NewPiece(aCopy.board[i][j]->getColor(),
+                if (aCopy.board[i][j] != nullptr) {
+                    NewPiece* thePiece = new NewPiece(aCopy.board[i][j]->getColor(),
                                                aCopy.board[i][j]->getLocation(),
-                                               aCopy.board[i][j]->getKind()));
+                                               aCopy.board[i][j]->getKind());
+
+                    row.push_back(thePiece);
+
+                    if(thePiece->getColor() == PieceColor::blue)
+                        bluePieces.push_back(thePiece);
+                    else
+                        goldPieces.push_back(thePiece);
+                }
                 else
                     row.push_back(nullptr);
 
             board.push_back(row);
         }
 
-        for (auto piece: aCopy.bluePieces)
-            bluePieces.push_back(new NewPiece(piece->getColor(), piece->getLocation(), piece->getKind()));
-
-        for (auto piece: aCopy.goldPieces)
-            goldPieces.push_back(new NewPiece(piece->getColor(), piece->getLocation(), piece->getKind()));
-
         stateColor = aCopy.stateColor;
     }
 
-    void GameState::getMoves(PieceColor color) {
-        if (color == PieceColor::blue) {
+    void GameState::getMoves() {
+        if (this->stateColor == PieceColor::blue) {
             for (auto piece: this->bluePieces)
                 getPieceMoves(piece);
         }
@@ -56,9 +59,6 @@ namespace ECE141 {
 
 
     void GameState::getPieceMoves(NewPiece *aPiece) {
-        std::vector<Location *> locationMoves;
-
-
         // have all avail locations
         Location *upLeft = new Location(aPiece->getLocation().row - 1, aPiece->getLocation().col - 1);
         Location *upRight = new Location(aPiece->getLocation().row - 1, aPiece->getLocation().col + 1);
@@ -71,36 +71,37 @@ namespace ECE141 {
                 GameState* aGameState = new GameState(*this);
                 aGameState->original = new NewPiece(aPiece->getColor(), aPiece->loc, aPiece->getKind());
                 aGameState->pieceMove = loc;
-                // remove piece from old position
                 auto oldLocation = aPiece->getLocation();
-                aGameState->board[oldLocation.row][oldLocation.col] = nullptr;
                 // move piece to new position
-                aGameState->board[loc->row][loc->col] = aPiece;
-//                aPiece->changeLocation(loc->row, loc->col);
-                // if there was  a jump remove conquered piece
-                if (std::abs(oldLocation.row-loc->row) == 2) {
+                aGameState->board[loc->row][loc->col] = aGameState->board[oldLocation.row][oldLocation.col];
+                aGameState->board[loc->row][loc->col]->changeLocation(loc->row, loc->col);
+                // remove piece from old position
+                aGameState->board[oldLocation.row][oldLocation.col] = nullptr;
+                // if there was a jump remove conquered piece
+                if (std::abs(oldLocation.row - loc->row) == 2) {
                     // change piece location
                     int delrow = oldLocation.row + (loc->row - oldLocation.row) / 2;
                     int delcol = oldLocation.col + (loc->col- oldLocation.col) / 2;
                     // remove piece from the teams pieces
                     auto pieceToDelete = aGameState->board[delrow][delcol];
                     if (pieceToDelete->getColor() == PieceColor::blue) {
-                        auto foundPiece = std::find(aGameState->bluePieces.begin(),aGameState->bluePieces.end(), pieceToDelete);
+                        auto foundPiece = std::find(aGameState->bluePieces.begin(), aGameState->bluePieces.end(),
+                                pieceToDelete);
                         if(foundPiece != aGameState->bluePieces.end()) {
                             aGameState->bluePieces.erase(foundPiece);
-//                            delete *foundPiece;
                         }
                     }
                     else {
-                        auto foundPiece = std::find(aGameState->goldPieces.begin(),aGameState->goldPieces.end(),pieceToDelete );
+                        auto foundPiece = std::find(aGameState->goldPieces.begin(), aGameState->goldPieces.end(),
+                                pieceToDelete);
                         if(foundPiece != aGameState->goldPieces.end()) {
                             aGameState->goldPieces.erase(foundPiece);
-//                            delete *foundPiece;
                         }
                     }
 
+                    aGameState->board[delrow][delcol] = nullptr;
+
                     delete pieceToDelete;
-//                    delete this->board[delrow][delcol];
                 }
 
                 this->possibleMoves.emplace_back(aGameState);
@@ -127,7 +128,7 @@ namespace ECE141 {
         if (!validLocation(location)) return false;
         if (this->board[location->row][location->col] == nullptr) {
             if (!this->jumpFlag) {
-                for (auto move: this->possibleMoves)
+                for (auto move: this->possibleMoves) //deleting bluePieces piece also
                     delete move;
 
                 this->possibleMoves.clear();

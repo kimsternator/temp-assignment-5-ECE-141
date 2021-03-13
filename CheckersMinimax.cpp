@@ -14,7 +14,7 @@ namespace ECE141 {
         else
             state->stateColor = (maximizingPlayer == 0) ? PieceColor::gold : PieceColor::blue;
 
-        state->getMoves(state->stateColor);
+        state->getMoves();
 
         if(maximizingPlayer) {
             int maxEval = -100;

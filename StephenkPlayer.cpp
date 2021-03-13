@@ -42,30 +42,24 @@ namespace ECE141 {
 
 
         state->board = board;
-//        std::cout << "\nhere";
-//        std::cout << "\n" << state->score() << std::endl;
         /*
          *       Game state is now initalized with state of real game
         */
 
         CheckersMinimax* mm = new CheckersMinimax(this->color);
-
-//        if(this->count == 2)
-//            std::cout << "here" << std::endl;
-
-        state = mm->minimax(state, 1, 0, 0, 1);
+        GameState* theMove = mm->minimax(state, 1, 0, 0, 1);
         std::cout << "finished planning" << std::endl;
         size_t mergeCount = (this->color == PieceColor::blue) ? theCount : theOtherCount;
 
         for(int pos=0;pos<mergeCount;pos++) {
-            if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == state->original->getLocation().row) {
-                if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == state->original->getLocation().col) {
-                    std::cout << "blue" << std::endl;
+            if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == theMove->original->getLocation().row) {
+                if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == theMove->original->getLocation().col) {
+                    std::cout << ((this->color == PieceColor::blue) ? "blue" : "gold") << std::endl;
                     std::cout << "(" << aGame.getAvailablePiece(this->color, pos)->getLocation().row <<
                     "," << aGame.getAvailablePiece(this->color, pos)->getLocation().col << ") -> (" <<
-                    state->pieceMove->row << "," << state->pieceMove->col << ")" << std::endl;
-                    std::cout << "move " << this->count++ << std::endl;
-                    aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(state->pieceMove));
+                    theMove->pieceMove->row << "," << theMove->pieceMove->col << ")" << std::endl;
+                    std::cout << "move " << this->count << std::endl;
+                    aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(theMove->pieceMove));
                     break;
                 }
             }
@@ -73,30 +67,38 @@ namespace ECE141 {
         std::cout << "made move" << std::endl;
         std::cout << std::endl;
 
-        while(state->jumpFlag) {
-            for(auto move: state->possibleMoves)
-                delete move;
 
-            state->possibleMoves.clear();
-            state = mm->minimax(state, 1, 0, 0, 1);
+        //need to debug here now
+        //need to fix copy of gamestate between blue/gold datamembers
+        //they are supposed to all be linked
+        while(std::abs(theMove->original->getLocation().row - theMove->pieceMove->row) == 2) {
+            auto anotherMove = mm->minimax(theMove, 1, 0, 0, 1);
 
-            // just the logic to move the darn piece
-            for(int pos=0;pos<mergeCount;pos++) {
-                if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == state->original->getLocation().row) {
-                    if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == state->original->getLocation().col) {
-                        std::cout << "blue" << std::endl;
-                        std::cout << "(" << aGame.getAvailablePiece(this->color, pos)->getLocation().row <<
-                        "," << aGame.getAvailablePiece(this->color, pos)->getLocation().col << ") -> (" <<
-                        state->pieceMove->row << "," << state->pieceMove->col << ")" << std::endl;
-                        std::cout << "move " << this->count++ << std::endl;
-                        std::cout << std::endl;
-                        aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(state->pieceMove));
-                        break;
+            if(std::abs(anotherMove->original->getLocation().row - anotherMove->pieceMove->row) == 2) {
+                for (int pos = 0; pos < mergeCount; pos++) {
+                    if (aGame.getAvailablePiece(this->color, pos)->getLocation().row ==
+                            anotherMove->original->getLocation().row) {
+                        if (aGame.getAvailablePiece(this->color, pos)->getLocation().col ==
+                            anotherMove->original->getLocation().col) {
+                            std::cout << ((this->color == PieceColor::blue) ? "blue" : "gold") << std::endl;
+                            std::cout << "(" << aGame.getAvailablePiece(this->color, pos)->getLocation().row <<
+                            "," << aGame.getAvailablePiece(this->color, pos)->getLocation().col << ") -> (" <<
+                            anotherMove->pieceMove->row << "," << anotherMove->pieceMove->col << ")" << std::endl;
+                            std::cout << "another move " << this->count << std::endl;
+                            std::cout << std::endl;
+                            aGame.movePieceTo(*(aGame.getAvailablePiece(this->color, pos)), *(anotherMove->pieceMove));
+                            break;
+                        }
                     }
                 }
+
+                theMove = anotherMove;
             }
-            // end the dumb logic
+            else
+                break;
         }
+
+        this->count++;
 
         delete state;
         delete mm;
