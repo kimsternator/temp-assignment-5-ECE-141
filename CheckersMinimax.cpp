@@ -5,9 +5,9 @@
 #include "CheckersMinimax.hpp"
 
 namespace ECE141 {
-    GameState* CheckersMinimax::minimax(GameState *state, int depth, int alpha, int beta, int maximizingPlayer) {
+    int CheckersMinimax::minimax(GameState *state, int depth, int alpha, int beta, int maximizingPlayer) {
         if(depth == 0 || state->gameOver())
-            return state;
+            return state->score();
 
         if(this->playerColor == PieceColor::gold)
             state->stateColor = (maximizingPlayer == 0) ? PieceColor::blue : PieceColor::gold;
@@ -18,43 +18,29 @@ namespace ECE141 {
 
         if(maximizingPlayer) {
             int maxEval = -100;
-            GameState* maxState = nullptr;
 
             for(auto child: state->possibleMoves) {
-                auto eval = minimax(child, depth - 1, alpha, beta, 0);
-                int temp = maxEval;
-                maxEval = std::max(maxEval, eval->score());
-                alpha = std::max(alpha, eval->score());
-
-                if(temp != maxEval) {
-                    delete maxState;
-
-                    maxState = eval;
-                }
+                child->getMoves();
+                int eval = minimax(child, depth - 1, alpha, beta, 0);
+                maxEval = std::max(maxEval, eval);
+                alpha = std::max(alpha, eval);
 //                if(beta <= alpha) break;
             }
 
-            return maxState;
+            return maxEval;
         }
         else {
             int minEval = 100;
-            GameState* minState = nullptr;
 
             for(auto child: state->possibleMoves) {
-                auto eval = minimax(child, depth - 1, alpha, beta, 1);
-                int temp = minEval;
-                minEval = std::min(minEval, eval->score());
-                alpha = std::min(alpha, eval->score());
-
-                if(temp != minEval) {
-                    delete minState;
-
-                    minState = eval;
-                }
+                child->getMoves();
+                int eval = minimax(child, depth - 1, alpha, beta, 1);
+                minEval = std::min(minEval, eval);
+                alpha = std::min(alpha, eval);
 //                if(beta <= alpha) break;
             }
 
-            return minState;
+            return minEval;
         }
     }
 }

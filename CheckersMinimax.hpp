@@ -19,7 +19,7 @@ namespace ECE141 {
             playerColor = aColor;
         }
 
-        GameState* minimax(GameState *state, int depth, int alpha, int beta, int maximizingPlayer);
+        int minimax(GameState *state, int depth, int alpha, int beta, int maximizingPlayer);
 
         PieceColor playerColor;
 };

@@ -46,6 +46,9 @@ namespace ECE141 {
     }
 
     void GameState::getMoves() {
+        if(!this->possibleMoves.empty())
+            return;
+
         if (this->stateColor == PieceColor::blue) {
             for (auto piece: this->bluePieces)
                 getPieceMoves(piece);
@@ -56,7 +59,12 @@ namespace ECE141 {
         }
     }
 
+    void GameState::clearMoves() {
+        for(auto move: this->possibleMoves)
+            delete move;
 
+        this->possibleMoves.clear();
+    }
 
     void GameState::getPieceMoves(NewPiece *aPiece) {
         // have all avail locations
@@ -69,6 +77,7 @@ namespace ECE141 {
         for (auto loc : locations) {
             if (check_if_can_add_move(aPiece,loc)) { // enter if it is a valid move
                 GameState* aGameState = new GameState(*this);
+                aGameState->stateColor = (this->stateColor == PieceColor::blue) ? PieceColor::gold : PieceColor::blue;
                 aGameState->original = new NewPiece(aPiece->getColor(), aPiece->loc, aPiece->getKind());
                 aGameState->pieceMove = loc;
                 auto oldLocation = aPiece->getLocation();
@@ -77,6 +86,9 @@ namespace ECE141 {
                 aGameState->board[loc->row][loc->col]->changeLocation(loc->row, loc->col);
                 // remove piece from old position
                 aGameState->board[oldLocation.row][oldLocation.col] = nullptr;
+                //king a piece
+                if(loc->row == 0 || loc->row == Game::kBoardHeight - 1)
+                    aGameState->board[loc->row][loc->col]->kind = PieceKind::king;
                 // if there was a jump remove conquered piece
                 if (std::abs(oldLocation.row - loc->row) == 2) {
                     // change piece location

@@ -5,6 +5,7 @@
 #include "Game.hpp"
 #include "StephenkPlayer.hpp"
 
+const int depth = 3;
 
 namespace ECE141 {
 
@@ -42,19 +43,30 @@ namespace ECE141 {
 
 
         state->board = board;
+        state->stateColor = this->color;
+        state->original = nullptr;
+        state->pieceMove = nullptr;
         /*
          *       Game state is now initalized with state of real game
         */
 
         CheckersMinimax* mm = new CheckersMinimax(this->color);
-        GameState* theMove = mm->minimax(state, 1, 0, 0, 1);
+        state->getMoves();
+        std::vector<int> scores;
+        for(auto move: state->possibleMoves)
+            scores.push_back(mm->minimax(move, depth - 1, 0, 0, 0));
+
+        if(scores.empty()) //no possible moves, so has to forfeit
+            return false;
+
+        std::cout << ((this->color == PieceColor::blue) ? "blue" : "gold") << std::endl;
+        GameState* theMove = state->possibleMoves[std::max_element(scores.begin(), scores.end()) - scores.begin()];
         std::cout << "finished planning" << std::endl;
         size_t mergeCount = (this->color == PieceColor::blue) ? theCount : theOtherCount;
 
         for(int pos=0;pos<mergeCount;pos++) {
             if(aGame.getAvailablePiece(this->color, pos)->getLocation().row == theMove->original->getLocation().row) {
                 if(aGame.getAvailablePiece(this->color, pos)->getLocation().col == theMove->original->getLocation().col) {
-                    std::cout << ((this->color == PieceColor::blue) ? "blue" : "gold") << std::endl;
                     std::cout << "(" << aGame.getAvailablePiece(this->color, pos)->getLocation().row <<
                     "," << aGame.getAvailablePiece(this->color, pos)->getLocation().col << ") -> (" <<
                     theMove->pieceMove->row << "," << theMove->pieceMove->col << ")" << std::endl;
@@ -67,20 +79,30 @@ namespace ECE141 {
         std::cout << "made move" << std::endl;
         std::cout << std::endl;
 
-
+        if(this->color == PieceColor::blue & this->count == 1)
+            std::cout << std::endl;
         //need to debug here now
         //need to fix copy of gamestate between blue/gold datamembers
         //they are supposed to all be linked
+        std::cout << "looking" << std::endl;
         while(std::abs(theMove->original->getLocation().row - theMove->pieceMove->row) == 2) {
-            auto anotherMove = mm->minimax(theMove, 1, 0, 0, 1);
+            theMove->clearMoves();
+            theMove->stateColor = this->color;
+            theMove->getMoves();
+            std::vector<int> anotherScores;
+
+            for(auto move: theMove->possibleMoves)
+                anotherScores.push_back(mm->minimax(move, depth - 1, 0, 0, 0));
+
+            auto anotherMove = theMove->possibleMoves[std::max_element(anotherScores.begin(), anotherScores.end()) - anotherScores.begin()];
 
             if(std::abs(anotherMove->original->getLocation().row - anotherMove->pieceMove->row) == 2) {
+                std::cout << "found anotther" << std::endl;
                 for (int pos = 0; pos < mergeCount; pos++) {
                     if (aGame.getAvailablePiece(this->color, pos)->getLocation().row ==
                             anotherMove->original->getLocation().row) {
                         if (aGame.getAvailablePiece(this->color, pos)->getLocation().col ==
                             anotherMove->original->getLocation().col) {
-                            std::cout << ((this->color == PieceColor::blue) ? "blue" : "gold") << std::endl;
                             std::cout << "(" << aGame.getAvailablePiece(this->color, pos)->getLocation().row <<
                             "," << aGame.getAvailablePiece(this->color, pos)->getLocation().col << ") -> (" <<
                             anotherMove->pieceMove->row << "," << anotherMove->pieceMove->col << ")" << std::endl;
@@ -100,11 +122,11 @@ namespace ECE141 {
 
         this->count++;
 
+        std::cout << "deleting" << std::endl;
         delete state;
         delete mm;
 
         return true;
-        return false; //if you return false, you forfeit!
     }
 }
 

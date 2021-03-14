@@ -61,9 +61,9 @@ namespace ECE141
 
             this->possibleMoves.clear();
             //deleting original
-            delete original;
+            delete this->original;
             //deleting pieceMove
-            delete pieceMove;
+            delete this->pieceMove;
         }
 
         GameState(const GameState &aCopy);
@@ -87,6 +87,8 @@ namespace ECE141
         }
 
         void getMoves();
+
+        void clearMoves();
 
         void getPieceMoves(NewPiece *aPiece);
 
