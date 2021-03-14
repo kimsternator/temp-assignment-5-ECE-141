@@ -3,7 +3,7 @@
 //
 
 #include "GameState.hpp"
-
+#include <algorithm>
 namespace ECE141 {
     bool NewPiece::operator==(ECE141::NewPiece aNewPiece) const {
         if(this->hasColor(aNewPiece.getColor()))

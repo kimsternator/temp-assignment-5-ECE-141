@@ -4,7 +4,7 @@
 
 #include "Game.hpp"
 #include "StephenkPlayer.hpp"
-
+#include <algorithm>
 const int depth = 3;
 
 namespace ECE141 {
@@ -54,7 +54,7 @@ namespace ECE141 {
         state->getMoves();
         std::vector<int> scores;
         for(auto move: state->possibleMoves)
-            scores.push_back(mm->minimax(move, depth - 1, 0, 0, 0));
+            scores.push_back(mm->minimax(move, depth , 0, 0, 0));
 
         if(scores.empty()) //no possible moves, so has to forfeit
             return false;
@@ -92,7 +92,7 @@ namespace ECE141 {
             std::vector<int> anotherScores;
 
             for(auto move: theMove->possibleMoves)
-                anotherScores.push_back(mm->minimax(move, depth - 1, 0, 0, 0));
+                anotherScores.push_back(mm->minimax(move, depth , 0, 0, 0));
 
             auto anotherMove = theMove->possibleMoves[std::max_element(anotherScores.begin(), anotherScores.end()) - anotherScores.begin()];
 
